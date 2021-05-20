@@ -10,8 +10,8 @@ class BotActions:
     @staticmethod
     def open_new_browser_window():
         options = Options()
-        options.add_argument('user-data-dir=C:/Users/jackd/AppData/Local/Google/Chrome/User Data/Profile 2')
-        browser = webdriver.Chrome(executable_path='C:/Users/jackd/OneDrive/Desktop/stock-trading/chromedriver.exe', chrome_options=options)
+        options.add_argument('user-data-dir=/Users/jackdonofrio/Library/Application Support/Google/Chrome/Profile 1')
+        browser = webdriver.Chrome(executable_path='/Users/jackdonofrio/Desktop/trade-bot/chromedriver', chrome_options=options)
         return browser
 
     @staticmethod
@@ -73,7 +73,7 @@ def display_portfolio_printout():
 
     print(table.draw())
 
-display_portfolio_printout()
+# display_portfolio_printout()
 
 class BotEngine:
     @staticmethod
@@ -84,11 +84,28 @@ class BotEngine:
             for ticker in data:
                 stock_api_data = StockData(ticker)
                 percent_change = stock_api_data.percent_change
-                if percent_change < 20:
-                    pass # buy to cover if stock drops 20%
+                if percent_change < 20: # cover short if it drops 20%
+                    BotActions.cover_stock(BotActions.open_new_browser_window(), ticker, data[ticker]['shares'])
             # Algorithm to discover new stocks:
+            stocks_to_check = BotEngine.most_volatile_stocks()
+            for ticker in stocks_to_check:
+                stock_api_data = StockData(ticker)
+                if 200 > stock_api_data.percent_change > 50 and stock_api_data.current_price > 5: # buy if valued over $5 and stock increased 50% 
+                    # get $200 worth of stock
+                    shares = 200 // stock_api_data.current_price
+                    BotActions.cover_stock(BotActions.open_new_browser_window(), ticker, shares)
 
             sleep(10)
     @staticmethod
     def most_volatile_stocks():
-        pass
+        """
+        Need to find an API that can do this because selenium shouldn't be doing this job.
+        This function is to find tickers and nothing else because the numerical stock data from 
+        tradingview can be unreliable.
+        """
+        browser = BotActions.open_new_browser_window()
+        browser.get('https://www.tradingview.com/markets/stocks-usa/market-movers-most-volatile/')
+        browser.find_element_by_xpath('/html/body/div[2]/div[6]/div/div/div/div[3]/div[2]/div[3]/table/thead/tr/th[3]').click()
+        sleep(5)
+        return [browser.find_element_by_xpath(f"/html/body/div[2]/div[6]/div/div/div/div[3]/div[2]/div[3]/table/tbody/tr[{x}]/td[1]/div/div[2]/a").text for x in range(1,6)]
+
