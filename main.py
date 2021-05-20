@@ -26,9 +26,11 @@ class BotActions:
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[1]/ul/li[2]').click()
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[2]/div[2]/div[1]/input').send_keys(shares)
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[3]/div/button[3]').click()
+            browser.close()
             # Update position in database
             Database.update_stock_data(ticker, shares, price_at_trade_time)
             print('Position updated')
+            sleep(5)
 
         except:
             print(f'unable to short {shares} shares of {ticker}')
@@ -45,9 +47,11 @@ class BotActions:
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[1]/ul/li[4]').click()
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[2]/div[2]/div[1]/input').send_keys(shares)
             browser.find_element_by_xpath('/html/body/div[8]/div/div/div[1]/form/div[3]/div/button[3]').click()
+            browser.close()
             # Update position in database
             Database.update_stock_data(ticker, shares * -1, price_at_trade_time)
             print('Position updated')
+            sleep(5)
 
         except:
             print(f'unable to cover {shares} shares of {ticker}')
@@ -83,7 +87,7 @@ class BotEngine:
             data = Database.get_json()
             for ticker in data:
                 stock_api_data = StockData(ticker)
-                percent_change = stock_api_data.percent_change
+                percent_change = (stock_api_data.current_price - data[ticker]['value']) / data[ticker]['value'] * 100
                 if percent_change < 20: # cover short if it drops 20%
                     BotActions.cover_stock(BotActions.open_new_browser_window(), ticker, data[ticker]['shares'])
             # Algorithm to discover new stocks:
@@ -106,6 +110,11 @@ class BotEngine:
         browser = BotActions.open_new_browser_window()
         browser.get('https://www.tradingview.com/markets/stocks-usa/market-movers-most-volatile/')
         browser.find_element_by_xpath('/html/body/div[2]/div[6]/div/div/div/div[3]/div[2]/div[3]/table/thead/tr/th[3]').click()
-        sleep(5)
-        return [browser.find_element_by_xpath(f"/html/body/div[2]/div[6]/div/div/div/div[3]/div[2]/div[3]/table/tbody/tr[{x}]/td[1]/div/div[2]/a").text for x in range(1,6)]
+        sleep(2)
+        stocks = [browser.find_element_by_xpath(f"/html/body/div[2]/div[6]/div/div/div/div[3]/div[2]/div[3]/table/tbody/tr[{x}]/td[1]/div/div[2]/a").text for x in range(1,6)]
+        browser.close()
+        sleep(1)
+        return stocks
 
+if __name__ == '__main__':
+    BotEngine.run()

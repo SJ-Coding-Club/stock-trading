@@ -21,5 +21,7 @@ class Database:
                 "shares" : share_delta,
                 "value" : value
             }
+        if data[ticker]['shares'] == 0:
+            del data[ticker]
         with open('positions.json', 'w') as file:
             json.dump(data, file)
