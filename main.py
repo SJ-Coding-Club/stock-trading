@@ -88,7 +88,7 @@ class BotEngine:
             for ticker in data:
                 stock_api_data = StockData(ticker)
                 percent_change = (stock_api_data.current_price - data[ticker]['value']) / data[ticker]['value'] * 100
-                if percent_change < 20: # cover short if it drops 20%
+                if percent_change < -20: # cover short if it drops 20%
                     BotActions.cover_stock(BotActions.open_new_browser_window(), ticker, data[ticker]['shares'])
             # Algorithm to discover new stocks:
             stocks_to_check = BotEngine.most_volatile_stocks()
